@@ -32,6 +32,21 @@ describe("product context resolver", () => {
     })
   })
 
+  test("explicit mock identity source preserves local identity behavior", async () => {
+    const result = await run("valid.seed.json", "--identity-source", "mock", "--email", "dev@empresa.com")
+
+    expect(result.exitCode).toBe(0)
+    expect(JSON.parse(result.stdout).user.source).toBeUndefined()
+    expect(JSON.parse(result.stdout).user.email).toBe("dev@empresa.com")
+  })
+
+  test("unknown identity source exits non-zero", async () => {
+    const result = await run("valid.seed.json", "--identity-source", "missing")
+
+    expect(result.exitCode).not.toBe(0)
+    expect(result.stderr).toContain("Unsupported identity source")
+  })
+
   test("project input selects project without changing product", async () => {
     const result = await run("valid.seed.json", "--project", "TryController")
 

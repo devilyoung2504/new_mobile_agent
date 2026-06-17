@@ -3,6 +3,7 @@
 import path from "node:path"
 import { parseArgs } from "node:util"
 import { resolveMockDeveloperIdentity } from "./developer-identity"
+import { resolveAzcliDeveloperIdentity } from "./entra-azcli-identity"
 
 type Seed = {
   identityMock: {
@@ -38,12 +39,14 @@ const { values } = parseArgs({
   options: {
     check: { type: "boolean", default: false },
     email: { type: "string" },
+    "identity-source": { type: "string" },
     project: { type: "string" },
     seed: { type: "string" },
   },
 })
 const seed = (await Bun.file(path.resolve(root, values.seed ?? "docs/internal-product/product-context.seed.json")).json()) as Seed
-const identity = values.email ? resolveMockDeveloperIdentity({ email: values.email }) : undefined
+const identitySource = values["identity-source"]
+const identity = await resolveDeveloperIdentity(identitySource, values.email)
 const email = identity?.email ?? seed.identityMock.email
 const emailDomain = requireValue(email.split("@")[1], "Developer email must include a domain")
 const developer = requireValue(
@@ -114,6 +117,21 @@ if (values.check) {
 }
 
 console.log(JSON.stringify(resolved, null, 2))
+
+async function resolveDeveloperIdentity(source: string | undefined, email: string | undefined) {
+  if (!source && !email) return undefined
+  if (!source || source === "mock") return resolveMockDeveloperIdentity({ email })
+  if (source === "azcli") {
+    const identity = await resolveAzcliDeveloperIdentity()
+    if (email && identity.email.toLowerCase() !== email.toLowerCase()) {
+      console.error(`--email does not match azcli identity: ${email}`)
+      process.exit(1)
+    }
+    return identity
+  }
+  console.error(`Unsupported identity source: ${source}`)
+  process.exit(1)
+}
 
 function requireValue<T>(value: T | undefined, message: string) {
   if (value) return value
