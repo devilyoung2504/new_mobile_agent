@@ -2,6 +2,7 @@
 
 import path from "node:path"
 import { parseArgs } from "node:util"
+import { resolveMockDeveloperIdentity } from "./developer-identity"
 
 type Seed = {
   identityMock: {
@@ -17,6 +18,7 @@ type Seed = {
   }>
   productProfiles: Array<{
     id: string
+    project?: string
     default_skill: string
     context_packs: string[]
   }>
@@ -35,21 +37,38 @@ const { values } = parseArgs({
   args: Bun.argv.slice(2),
   options: {
     check: { type: "boolean", default: false },
+    email: { type: "string" },
+    project: { type: "string" },
     seed: { type: "string" },
   },
 })
 const seed = (await Bun.file(path.resolve(root, values.seed ?? "docs/internal-product/product-context.seed.json")).json()) as Seed
-const emailDomain = requireValue(seed.identityMock.email.split("@")[1], "Identity mock email must include a domain")
+const identity = values.email ? resolveMockDeveloperIdentity({ email: values.email }) : undefined
+const email = identity?.email ?? seed.identityMock.email
+const emailDomain = requireValue(email.split("@")[1], "Developer email must include a domain")
 const developer = requireValue(
   seed.developerProfiles.find(
     (profile) =>
-      profile.actor_ids.includes(seed.identityMock.actor_id) || profile.actor_domains.includes(emailDomain),
+      values.email
+        ? profile.actor_domains.includes(emailDomain)
+        : profile.actor_ids.includes(seed.identityMock.actor_id) || profile.actor_domains.includes(emailDomain),
   ),
-  "No developer profile matched the identity mock",
+  `No developer profile matched ${email}`,
 )
+const selectedProject = values.project
+if (selectedProject && !developer.projects.includes(selectedProject)) {
+  console.error(`Project not found in developer profile: ${selectedProject}`)
+  process.exit(1)
+}
+const productID = selectedProject
+  ? requireValue(
+      seed.productProfiles.find((profile) => profile.project === selectedProject)?.id,
+      `No product profile found for project ${selectedProject}`,
+    )
+  : developer.default_product
 const product = requireValue(
-  seed.productProfiles.find((profile) => profile.id === developer.default_product),
-  `No product profile found for ${developer.default_product}`,
+  seed.productProfiles.find((profile) => profile.id === productID),
+  `No product profile found for ${productID}`,
 )
 const skill = requireValue(
   seed.skills.find((item) => item.id === product.default_skill),
@@ -69,8 +88,16 @@ await Promise.all(
 )
 
 const resolved = {
-  user: seed.identityMock.email,
+  user: identity
+    ? {
+        email: identity.email,
+        displayName: identity.displayName,
+        tenantId: identity.tenantId,
+        objectId: identity.objectId,
+      }
+    : seed.identityMock.email,
   projects: developer.projects,
+  ...(selectedProject ? { selectedProject } : {}),
   selectedProduct: product.id,
   selectedSkill: skill.id,
   contextPacks: product.context_packs,

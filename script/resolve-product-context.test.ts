@@ -20,6 +20,36 @@ describe("product context resolver", () => {
     })
   })
 
+  test("email input resolves mock user details", async () => {
+    const result = await run("valid.seed.json", "--email", "dev@empresa.com")
+
+    expect(result.exitCode).toBe(0)
+    expect(JSON.parse(result.stdout).user).toEqual({
+      email: "dev@empresa.com",
+      displayName: "Mobile Agent Developer",
+      tenantId: "mock-tenant",
+      objectId: "mock-object",
+    })
+  })
+
+  test("project input selects project without changing product", async () => {
+    const result = await run("valid.seed.json", "--project", "TryController")
+
+    expect(result.exitCode).toBe(0)
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      selectedProject: "TryController",
+      selectedProduct: "trycontroller-mobile",
+      selectedSkill: "android",
+    })
+  })
+
+  test("unknown project exits non-zero", async () => {
+    const result = await run("valid.seed.json", "--project", "MissingProject")
+
+    expect(result.exitCode).not.toBe(0)
+    expect(result.stderr).toContain("Project not found")
+  })
+
   test("unknown product exits non-zero", async () => {
     const result = await run("missing-product.seed.json")
 
