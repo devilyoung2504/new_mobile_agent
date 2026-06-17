@@ -52,11 +52,13 @@ The seed must not contain:
 - Azure DevOps write permissions.
 - MCP credentials.
 
-## Next Code Cut
+## Resolver Check
 
-The next implementation should be a tiny resolver that parses the seed and prints
-the expected resolved context. It should still avoid Entra, Azure DevOps, MCP,
-Android execution, dashboard work, and model gateway changes.
+Run:
+
+```sh
+bun script/resolve-product-context.ts --check
+```
 
 Success means the resolver can emit the expected JSON deterministically from the
 seed, with no network access and no secrets.
