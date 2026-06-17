@@ -20,6 +20,7 @@ import { PartID } from "./schema"
 import { EffectBridge } from "@/effect/bridge"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
+import { classifyAzureDevopsMcpTool } from "./ado-mcp-policy"
 
 export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
   agent: Agent.Info
@@ -131,6 +132,28 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
             { args },
           )
           const result: Awaited<ReturnType<NonNullable<typeof execute>>> = yield* Effect.gen(function* () {
+            const azureDevopsAccess = classifyAzureDevopsMcpTool(key)
+            if (azureDevopsAccess === "read") return yield* Effect.promise(() => execute(args, opts))
+            if (azureDevopsAccess === "approval") {
+              yield* permission
+                .ask({
+                  permission: key,
+                  metadata: {
+                    mcp: "azure_devops",
+                    access: "write_or_unknown",
+                    args,
+                  },
+                  patterns: [key],
+                  always: [],
+                  sessionID: ctx.sessionID,
+                  tool: { messageID: input.processor.message.id, callID: opts.toolCallId },
+                  ruleset: Permission.merge(input.agent.permission, input.session.permission ?? []).filter(
+                    (rule) => rule.action === "deny",
+                  ),
+                })
+                .pipe(Effect.orDie)
+              return yield* Effect.promise(() => execute(args, opts))
+            }
             yield* ctx.ask({ permission: key, metadata: {}, patterns: ["*"], always: ["*"] })
             return yield* Effect.promise(() => execute(args, opts))
           }).pipe(
