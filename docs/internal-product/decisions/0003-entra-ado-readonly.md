@@ -77,6 +77,13 @@ workspace files, shell output, or OpenCode runtime logs. This includes Entra
 client secrets, OAuth authorization codes, PKCE verifier, refresh tokens, Azure
 DevOps access tokens, PATs, session cookies, and full `.env` content.
 
+Implementation note: do not use OpenCode's direct remote-MCP OAuth flow for
+Azure DevOps. The known-good shape from `mobile-agent/open-swe` is either a
+server-side Entra-to-ADO bearer minted by the orchestrator, or a local `stdio`
+MCP smoke authenticated by `azcli`. Direct browser OAuth from OpenCode produced
+`AADSTS9010010` because the Azure DevOps MCP metadata caused mismatched
+`resource` and `scope` parameters.
+
 ## Validation
 
 For this documentation-only cut, run:
