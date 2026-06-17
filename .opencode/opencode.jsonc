@@ -12,7 +12,18 @@
       "description": "Contains opencode logs and data",
     },
   },
-  "mcp": {},
+  "mcp": {
+    "azure_devops": {
+      "type": "local",
+      "command": [
+        "sh",
+        "-lc",
+        "ado_mcp_project=\"$AZURE_DEVOPS_MCP_PROJECT\" exec npx -y @azure-devops/mcp \"$AZURE_DEVOPS_MCP_ORG\" --authentication azcli -d core work-items repositories search"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    },
+  },
   "tools": {
     "github-triage": false,
     "github-pr-search": false,
