@@ -23,6 +23,25 @@
       "enabled": true,
       "timeout": 30000
     },
+    "android_skills": {
+      "type": "local",
+      "command": [
+        "node",
+        "/Users/dev14/Desktop/WorkProjects/Mobile agent/android-skills-mcp/packages/mcp/dist/bin.js"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    },
+    "mobile_mcp": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@mobilenext/mobile-mcp@latest"
+      ],
+      "enabled": true,
+      "timeout": 30000
+    },
   },
   "tools": {
     "github-triage": false,

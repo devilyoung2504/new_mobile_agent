@@ -9,6 +9,7 @@
     "dev": "bun run --cwd packages/opencode --conditions=browser src/index.ts",
     "dev:web": "bun --cwd packages/app dev",
     "dev:console": "ulimit -n 10240 2>/dev/null; bun run --cwd packages/console/app dev",
+    "run:interactive": "bun --cwd packages/opencode src/index.ts run --interactive",
     "lint": "oxlint",
     "typecheck": "bun turbo typecheck",
     "upgrade-opentui": "bun run script/upgrade-opentui.ts",

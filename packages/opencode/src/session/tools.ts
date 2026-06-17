@@ -21,6 +21,7 @@ import { EffectBridge } from "@/effect/bridge"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { classifyAzureDevopsMcpTool } from "./ado-mcp-policy"
+import { classifyMobileMcpTool } from "./mobile-mcp-policy"
 
 export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
   agent: Agent.Info
@@ -141,6 +142,28 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
                   metadata: {
                     mcp: "azure_devops",
                     access: "write_or_unknown",
+                    args,
+                  },
+                  patterns: [key],
+                  always: [],
+                  sessionID: ctx.sessionID,
+                  tool: { messageID: input.processor.message.id, callID: opts.toolCallId },
+                  ruleset: Permission.merge(input.agent.permission, input.session.permission ?? []).filter(
+                    (rule) => rule.action === "deny",
+                  ),
+                })
+                .pipe(Effect.orDie)
+              return yield* Effect.promise(() => execute(args, opts))
+            }
+            const mobileAccess = classifyMobileMcpTool(key)
+            if (mobileAccess === "read") return yield* Effect.promise(() => execute(args, opts))
+            if (mobileAccess === "approval") {
+              yield* permission
+                .ask({
+                  permission: key,
+                  metadata: {
+                    mcp: "mobile_mcp",
+                    access: "interactive_or_unknown",
                     args,
                   },
                   patterns: [key],
