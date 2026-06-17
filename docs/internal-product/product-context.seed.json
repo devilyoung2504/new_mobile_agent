@@ -1,0 +1,60 @@
+{
+  "identityMock": {
+    "actor_id": "entra:mock-dev",
+    "display_name": "Mobile Agent Developer",
+    "email": "dev@empresa.com",
+    "tenant_id": "mock-tenant"
+  },
+  "developerProfiles": [
+    {
+      "id": "trycontroller-developer",
+      "actor_domains": ["empresa.com"],
+      "actor_ids": ["entra:mock-dev"],
+      "projects": ["TryController"],
+      "allowed_organizations": ["trycontroller"],
+      "allowed_projects": ["TryController"],
+      "allowed_repositories": ["TryControllerApp"],
+      "default_product": "trycontroller-mobile",
+      "allowed_tools": ["azure-devops-read", "repo-read", "android-skills"]
+    }
+  ],
+  "productProfiles": [
+    {
+      "id": "trycontroller-mobile",
+      "project": "TryController",
+      "repositories": ["TryControllerApp"],
+      "default_skill": "android",
+      "context_packs": ["business-rules", "repo-guide", "qa-known-issues"]
+    }
+  ],
+  "skills": [
+    {
+      "id": "android",
+      "execution": "disabled",
+      "scope": "read-only",
+      "toolsets": ["android-skills"]
+    }
+  ],
+  "contextPacks": [
+    {
+      "id": "business-rules",
+      "source": "docs/internal-product/context-packs/business-rules.md"
+    },
+    {
+      "id": "repo-guide",
+      "source": "docs/internal-product/context-packs/repo-guide.md"
+    },
+    {
+      "id": "qa-known-issues",
+      "source": "docs/internal-product/context-packs/qa-known-issues.md"
+    }
+  ],
+  "expectedResolvedContext": {
+    "user": "dev@empresa.com",
+    "projects": ["TryController"],
+    "selectedProduct": "trycontroller-mobile",
+    "selectedSkill": "android",
+    "contextPacks": ["business-rules", "repo-guide", "qa-known-issues"],
+    "allowedTools": ["azure-devops-read", "repo-read", "android-skills"]
+  }
+}
