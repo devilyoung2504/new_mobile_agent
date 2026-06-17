@@ -1,0 +1,19 @@
+{
+  "identityMock": {
+    "actor_id": "entra:mock-dev",
+    "email": "dev@empresa.com"
+  },
+  "developerProfiles": [
+    {
+      "actor_domains": ["empresa.com"],
+      "actor_ids": ["entra:mock-dev"],
+      "projects": ["TryController"],
+      "default_product": "missing-product",
+      "allowed_tools": ["azure-devops-read", "repo-read", "android-skills"]
+    }
+  ],
+  "productProfiles": [],
+  "skills": [{ "id": "android" }],
+  "contextPacks": [],
+  "expectedResolvedContext": {}
+}

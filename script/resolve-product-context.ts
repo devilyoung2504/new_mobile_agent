@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import path from "node:path"
+import { parseArgs } from "node:util"
 
 type Seed = {
   identityMock: {
@@ -30,7 +31,14 @@ type Seed = {
 }
 
 const root = path.resolve(import.meta.dir, "..")
-const seed = (await Bun.file(path.join(root, "docs/internal-product/product-context.seed.json")).json()) as Seed
+const { values } = parseArgs({
+  args: Bun.argv.slice(2),
+  options: {
+    check: { type: "boolean", default: false },
+    seed: { type: "string" },
+  },
+})
+const seed = (await Bun.file(path.resolve(root, values.seed ?? "docs/internal-product/product-context.seed.json")).json()) as Seed
 const emailDomain = requireValue(seed.identityMock.email.split("@")[1], "Identity mock email must include a domain")
 const developer = requireValue(
   seed.developerProfiles.find(
@@ -69,7 +77,7 @@ const resolved = {
   allowedTools: developer.allowed_tools,
 }
 
-if (Bun.argv.includes("--check")) {
+if (values.check) {
   if (JSON.stringify(resolved) === JSON.stringify(seed.expectedResolvedContext)) {
     console.log("resolved context ok")
     process.exit(0)
