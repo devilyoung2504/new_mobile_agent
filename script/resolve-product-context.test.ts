@@ -43,6 +43,55 @@ describe("product context resolver", () => {
     })
   })
 
+  test("ado flag adds read-only profile", async () => {
+    const result = await run("valid.seed.json", "--with-ado-readonly")
+
+    expect(result.exitCode).toBe(0)
+    expect(JSON.parse(result.stdout).ado).toEqual({
+      organization: "trycontroller",
+      userEmail: "dev@empresa.com",
+      projects: [
+        {
+          name: "TryController",
+          repositories: [{ name: "TryControllerApp", defaultBranch: "develop" }],
+          workItemsReadable: true,
+          pullRequestsReadable: true,
+          testPlansReadable: true,
+        },
+      ],
+      source: "mock",
+    })
+  })
+
+  test("ado flag uses email input", async () => {
+    const result = await run("valid.seed.json", "--email", "dev@empresa.com", "--with-ado-readonly")
+
+    expect(result.exitCode).toBe(0)
+    expect(JSON.parse(result.stdout).ado.userEmail).toBe("dev@empresa.com")
+  })
+
+  test("ado flag filters by selected project", async () => {
+    const result = await run("valid.seed.json", "--project", "TryController", "--with-ado-readonly")
+
+    expect(result.exitCode).toBe(0)
+    expect(JSON.parse(result.stdout).ado.projects).toHaveLength(1)
+    expect(JSON.parse(result.stdout).ado.projects[0].name).toBe("TryController")
+  })
+
+  test("ado flag fails when product project is missing in ado profile", async () => {
+    const result = await run("ado-missing-project.seed.json", "--project", "OtherProject", "--with-ado-readonly")
+
+    expect(result.exitCode).not.toBe(0)
+    expect(result.stderr).toContain("Azure DevOps project not found")
+  })
+
+  test("ado flag fails when ado project has no product mapping", async () => {
+    const result = await run("missing-product.seed.json", "--project", "TryController", "--with-ado-readonly")
+
+    expect(result.exitCode).not.toBe(0)
+    expect(result.stderr).toContain("No product profile found for project TryController")
+  })
+
   test("unknown project exits non-zero", async () => {
     const result = await run("valid.seed.json", "--project", "MissingProject")
 

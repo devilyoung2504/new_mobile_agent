@@ -2,6 +2,7 @@
 
 import path from "node:path"
 import { parseArgs } from "node:util"
+import { resolveMockAdoReadOnlyProfile } from "./ado-readonly-profile"
 import { resolveMockDeveloperIdentity } from "./developer-identity"
 
 type Seed = {
@@ -40,6 +41,7 @@ const { values } = parseArgs({
     email: { type: "string" },
     project: { type: "string" },
     seed: { type: "string" },
+    "with-ado-readonly": { type: "boolean", default: false },
   },
 })
 const seed = (await Bun.file(path.resolve(root, values.seed ?? "docs/internal-product/product-context.seed.json")).json()) as Seed
@@ -102,6 +104,11 @@ const resolved = {
   selectedSkill: skill.id,
   contextPacks: product.context_packs,
   allowedTools: developer.allowed_tools,
+  ...(values["with-ado-readonly"]
+    ? {
+        ado: resolveAdoReadOnlyProfile(),
+      }
+    : {}),
 }
 
 if (values.check) {
@@ -119,4 +126,16 @@ function requireValue<T>(value: T | undefined, message: string) {
   if (value) return value
   console.error(message)
   process.exit(1)
+}
+
+function resolveAdoReadOnlyProfile() {
+  try {
+    return resolveMockAdoReadOnlyProfile({
+      userEmail: identity?.email ?? resolveMockDeveloperIdentity().email,
+      project: selectedProject,
+    })
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error))
+    process.exit(1)
+  }
 }
